@@ -6,12 +6,14 @@ const Noteitem = (props) => {
   const { deleteNote } = context;
   const { note, updateNote } = props;
   const [showFullContent, setShowFullContent] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this note?')) {
       deleteNote(note._id);
       props.showAlert("Note deleted successfully", "success");
     }
+    setDropdownOpen(false);
   };
 
   // Truncate content for preview
@@ -25,117 +27,265 @@ const Noteitem = (props) => {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
   };
 
   return (
-    <div className="col-lg-4 col-md-6 col-sm-12">
-      <div className="card my-3 h-100 note-card">
-        <div className="card-header d-flex justify-content-between align-items-start">
-          <h5 className="card-title mb-0 flex-grow-1" title={note.title}>
-            {note.title.length > 30 ? note.title.substring(0, 30) + '...' : note.title}
+    <div className="col-12 col-md-6 col-lg-4" style={{ marginBottom: 'var(--spacing-lg)' }}>
+      <div 
+        className="card"
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'all var(--transition-normal)',
+          cursor: 'pointer',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        }}
+      >
+        {/* Card Header */}
+        <div className="card-header" style={{
+          padding: 'var(--spacing-md)',
+          borderBottom: '1px solid var(--color-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          minHeight: '60px'
+        }}>
+          <h5 style={{
+            margin: 0,
+            fontSize: 'var(--text-lg)',
+            fontWeight: '600',
+            color: 'var(--color-text)',
+            lineHeight: '1.4',
+            flex: 1,
+            marginRight: 'var(--spacing-sm)',
+            wordBreak: 'break-word'
+          }}>
+            {note.title.length > 50 ? note.title.substring(0, 50) + '...' : note.title}
           </h5>
           
           {/* Action Dropdown */}
-          <div className="dropdown">
+          <div className="dropdown" style={{ position: 'relative' }}>
             <button
-              className="btn btn-link btn-sm text-muted p-1"
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
+              onClick={toggleDropdown}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--color-background)';
+                e.target.style.color = 'var(--color-text)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--color-text-muted)';
+              }}
             >
               <i className="fas fa-ellipsis-v"></i>
             </button>
-            <ul className="dropdown-menu dropdown-menu-end">
-              <li>
-                <button className="dropdown-item" onClick={() => updateNote(note)}>
-                  <i className="fas fa-edit me-2"></i>Edit
+            
+            {dropdownOpen && (
+              <div className="dropdown-menu" style={{ display: 'block' }}>
+                <button 
+                  className="dropdown-item" 
+                  onClick={() => {
+                    updateNote(note);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  <i className="fas fa-edit"></i>Edit
                 </button>
-              </li>
-              <li><hr className="dropdown-divider" /></li>
-              <li>
-                <button className="dropdown-item text-danger" onClick={handleDelete}>
-                  <i className="fas fa-trash me-2"></i>Delete
+                <div className="dropdown-divider"></div>
+                <button 
+                  className="dropdown-item" 
+                  onClick={handleDelete}
+                  style={{ color: 'var(--color-error)' }}
+                >
+                  <i className="fas fa-trash"></i>Delete
                 </button>
-              </li>
-            </ul>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="card-body d-flex flex-column">
+        {/* Card Body */}
+        <div className="card-body" style={{
+          padding: 'var(--spacing-md)',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           {/* Note Content */}
-          <div className="note-content mb-3 flex-grow-1">
-            <p className="card-text" style={{ whiteSpace: 'pre-wrap' }}>
-              {truncateText(note.description, 150)}
+          <div style={{ flex: 1, marginBottom: 'var(--spacing-md)' }}>
+            <p style={{
+              margin: 0,
+              color: 'var(--color-text-secondary)',
+              lineHeight: '1.6',
+              fontSize: 'var(--text-sm)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}>
+              {truncateText(note.description, 120)}
             </p>
-            {note.description && note.description.length > 150 && (
+            {note.description && note.description.length > 120 && (
               <button
-                className="btn btn-link btn-sm p-0 mt-1"
                 onClick={() => setShowFullContent(!showFullContent)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  fontSize: 'var(--text-xs)',
+                  marginTop: 'var(--spacing-xs)',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-xs)'
+                }}
               >
-                <i className={`fas ${showFullContent ? 'fa-chevron-up' : 'fa-chevron-down'} me-1`}></i>
-                {showFullContent ? 'Show less' : 'Show more'}
+                <i className={`fas ${showFullContent ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                {showFullContent ? 'Show less' : 'Read more'}
               </button>
             )}
           </div>
 
           {/* Tag */}
           {note.tag && (
-            <div className="mb-3">
-              <span className="badge bg-primary">
-                <i className="fas fa-tag me-1"></i>{note.tag}
+            <div style={{ marginBottom: 'var(--spacing-md)' }}>
+              <span className="badge" style={{
+                backgroundColor: 'var(--color-primary-light)',
+                color: 'var(--color-primary-dark)',
+                fontSize: 'var(--text-xs)',
+                padding: 'var(--spacing-xs) var(--spacing-sm)',
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: '500'
+              }}>
+                <i className="fas fa-tag" style={{ marginRight: 'var(--spacing-xs)' }}></i>
+                {note.tag}
               </span>
             </div>
           )}
         </div>
 
         {/* Card Footer */}
-        <div className="card-footer bg-light">
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="text-muted small">
-              <i className="fas fa-calendar-plus me-1"></i>
-              {formatDate(note.date)}
-            </div>
-            
-            {/* Quick Actions */}
-            <div className="btn-group btn-group-sm" role="group">
-              <button
-                className="btn btn-outline-primary btn-sm"
-                onClick={() => updateNote(note)}
-                title="Edit Note"
-              >
-                <i className="fas fa-edit"></i>
-              </button>
-              <button
-                className="btn btn-outline-danger btn-sm"
-                onClick={handleDelete}
-                title="Delete Note"
-              >
-                <i className="fas fa-trash"></i>
-              </button>
-            </div>
+        <div className="card-footer" style={{
+          padding: 'var(--spacing-md)',
+          borderTop: '1px solid var(--color-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: 'var(--color-background)'
+        }}>
+          <div style={{
+            fontSize: 'var(--text-xs)',
+            color: 'var(--color-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-xs)'
+          }}>
+            <i className="fas fa-calendar-alt"></i>
+            {formatDate(note.date)}
+          </div>
+          
+          {/* Quick Actions */}
+          <div style={{
+            display: 'flex',
+            gap: 'var(--spacing-xs)'
+          }}>
+            <button
+              onClick={() => updateNote(note)}
+              title="Edit Note"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-primary)',
+                color: 'var(--color-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'var(--text-xs)',
+                transition: 'all var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--color-primary)';
+                e.target.style.color = 'var(--color-white)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--color-primary)';
+              }}
+            >
+              <i className="fas fa-edit"></i>
+            </button>
+            <button
+              onClick={handleDelete}
+              title="Delete Note"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-error)',
+                color: 'var(--color-error)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'var(--text-xs)',
+                transition: 'all var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--color-error)';
+                e.target.style.color = 'var(--color-white)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--color-error)';
+              }}
+            >
+              <i className="fas fa-trash"></i>
+            </button>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .note-card {
-          transition: transform 0.2s, box-shadow 0.2s;
-          border: 1px solid #dee2e6;
-        }
-        .note-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .note-content {
-          overflow-wrap: break-word;
-          word-wrap: break-word;
-        }
-        .card-title {
-          overflow-wrap: break-word;
-          word-wrap: break-word;
-        }
-      `}</style>
     </div>
   );
 };

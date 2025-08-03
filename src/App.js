@@ -44,18 +44,18 @@ function App() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.setAttribute('data-bs-theme', 'dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
       document.body.classList.add('dark-mode');
     }
   }, []);
 
   return (
-    <>
+    <div className="App">
       <NoteState key={authKey}>
         <Router>
           <Navbar refreshAuthState={refreshAuthState} />
           <Alert alert={alert}/>
-          <div className="container-fluid my-4">
+          <div className="main-content">
             <Routes>
               <Route 
                 path="/" 
@@ -96,7 +96,7 @@ function App() {
           </div>
         </Router>
       </NoteState>
-    </>
+    </div>
   );
 }
 
