@@ -23,22 +23,23 @@ const Login = (props) => {
       });
 
       const json = await response.json();
-      console.log(json);
       
       if (json.success) {
-        // Handle both possible token field names from backend
         const token = json.authtoken || json.authToken;
         if (token) {
           localStorage.setItem("token", token);
 
+          props.showAlert("Logged in successfully", "success");
+
+          window.dispatchEvent(new Event('authChanged'));
+
           if (props.refreshAuthState) {
-            props.refreshAuthState();
+            await props.refreshAuthState();
           }
 
-          props.showAlert("Logged in successfully", "success");
-          navigate("/");
+          navigate("/", { replace: true });
+          
         } else {
-          console.error('No token received:', json);
           props.showAlert("Login successful but no token received", "warning");
         }
       } else {

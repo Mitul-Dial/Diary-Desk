@@ -43,10 +43,8 @@ const Signup = (props) => {
       });
 
       const json = await response.json();
-      console.log(json);
       
       if (json.success) {
-        // Handle both possible token field names from backend
         const token = json.authtoken || json.authToken;
         if (token) {
           localStorage.setItem("token", token);
@@ -58,7 +56,6 @@ const Signup = (props) => {
           props.showAlert("Account created successfully", "success");
           navigate("/");
         } else {
-          console.error('No token received:', json);
           props.showAlert("Account created but no token received", "warning");
         }
       } else {
@@ -213,7 +210,6 @@ const Signup = (props) => {
                     borderColor: passwordsDontMatch ? 'var(--color-error)' : passwordsMatch ? 'var(--color-success)' : 'var(--color-border)'
                   }}
                 />
-                {/* Password Match Indicator */}
                 {credentials.password && credentials.cpassword && (
                   <div className="form-text" style={{
                     color: passwordsMatch ? 'var(--color-success)' : 'var(--color-error)',
@@ -298,8 +294,6 @@ const Signup = (props) => {
             </div>
           </div>
         </div>
-
-        {/* Decorative Elements */}
         <div style={{
           position: 'absolute',
           top: '15%',

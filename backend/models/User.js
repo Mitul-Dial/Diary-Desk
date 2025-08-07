@@ -11,7 +11,7 @@ const UserSchema = new Schema({
   email: {
     type: String,
     required: [true, "Email is required"],
-    unique: true,
+    unique: true, 
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email format"]
@@ -21,14 +21,39 @@ const UserSchema = new Schema({
     required: [true, "Password is required"],
     minlength: [5, "Password must be at least 5 characters long"]
   },
+  bio: {
+    type: String,
+    maxlength: [500, "Bio cannot exceed 500 characters"],
+    default: ""
+  },
+  profileImage: {
+    type: String,
+    default: ""
+  },
+  preferences: {
+    theme: {
+      type: String,
+      enum: ['light', 'dark', 'auto'],
+      default: 'light'
+    },
+    notifications: {
+      type: Boolean,
+      default: true
+    }
+  },
   date: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
-
-// Create index only once here (this removes the duplicate warning)
-UserSchema.index({ email: 1 });
+UserSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 const User = mongoose.model("user", UserSchema);
 

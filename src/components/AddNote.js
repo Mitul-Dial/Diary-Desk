@@ -187,28 +187,10 @@ const AddNote = (props) => {
         </div>
       </div>
 
-      {/* Inspirational Quote Section */}
       <div style={{
-        textAlign: 'center',
         marginTop: 'var(--spacing-xl)',
         padding: 'var(--spacing-lg)',
-        color: 'var(--color-text-secondary)'
       }}>
-        <p style={{
-          fontSize: 'var(--text-lg)',
-          fontStyle: 'italic',
-          margin: 0,
-          fontFamily: 'var(--font-secondary)'
-        }}>
-          "The pen is mightier than the sword."
-        </p>
-        <p style={{
-          fontSize: 'var(--text-sm)',
-          margin: 'var(--spacing-sm) 0 0 0',
-          opacity: 0.8
-        }}>
-          — Edward Bulwer-Lytton
-        </p>
       </div>
     </div>
   );

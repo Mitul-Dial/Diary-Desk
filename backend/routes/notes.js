@@ -2,16 +2,19 @@ const express = require("express");
 const router = express.Router();
 const fetchuser = require("../middleware/fetchuser");
 const Note = require("../models/Note");
-const { body, validationResult } = require("express-validator");
 
 // ROUTE 1: Get All the Notes using: GET "/api/notes/fetchallnotes". Login required
 router.get("/fetchallnotes", fetchuser, async (req, res) => {
   try {
-    const notes = await Note.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(notes);
+    // Only fetch notes that belong to the authenticated user
+    const notes = await Note.find({ user: req.user.id }).sort({ date: -1 });
+    res.json({
+      success: true,
+      notes: notes
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Fetch notes error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -19,48 +22,50 @@ router.get("/fetchallnotes", fetchuser, async (req, res) => {
 });
 
 // ROUTE 2: Add a new Note using: POST "/api/notes/addnote". Login required
-router.post(
-  "/addnote",
-  fetchuser,
-  [
-    body("title", "Enter a valid title").isLength({ min: 3 }),
-    body("description", "Description must be at least 5 characters").isLength({ min: 5 }),
-  ],
-  async (req, res) => {
-    try {
-      const { title, description, tag, attachments, images, todoItems } = req.body;
+router.post("/addnote", fetchuser, async (req, res) => {
+  try {
+    const { title, description, tag, attachments, images, todoItems } = req.body;
 
-      // If there are errors, return Bad request and the errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          success: false,
-          errors: errors.array() 
-        });
-      }
-
-      const note = new Note({
-        title,
-        description,
-        tag: tag || "General",
-        attachments: attachments || [],
-        images: images || [],
-        todoItems: todoItems || [],
-        user: req.user.id,
-      });
-      
-      const savedNote = await note.save();
-      res.json(savedNote);
-
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send({
+    // Simple validation
+    if (!title || title.length < 3) {
+      return res.status(400).json({ 
         success: false,
-        error: "Internal Server Error"
+        error: "Title must be at least 3 characters long" 
       });
     }
+
+    if (!description || description.length < 5) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Description must be at least 5 characters long" 
+      });
+    }
+
+    const note = new Note({
+      title: title.trim(),
+      description: description.trim(),
+      tag: tag ? tag.trim() : "General",
+      attachments: attachments || [],
+      images: images || [],
+      todoItems: todoItems || [],
+      user: req.user.id, // Ensure note is associated with the authenticated user
+    });
+    
+    const savedNote = await note.save();
+    
+    res.json({
+      success: true,
+      note: savedNote
+    });
+
+  } catch (error) {
+    console.error('Add note error:', error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
   }
-);
+});
 
 // ROUTE 3: Update an existing Note using: PUT "/api/notes/updatenote". Login required
 router.put("/updatenote/:id", fetchuser, async (req, res) => {
@@ -69,28 +74,25 @@ router.put("/updatenote/:id", fetchuser, async (req, res) => {
   try {
     // Create a newNote object
     const newNote = {};
-    if (title) { newNote.title = title; }
-    if (description) { newNote.description = description; }
-    if (tag) { newNote.tag = tag; }
+    if (title) { newNote.title = title.trim(); }
+    if (description) { newNote.description = description.trim(); }
+    if (tag) { newNote.tag = tag.trim(); }
     if (attachments !== undefined) { newNote.attachments = attachments; }
     if (images !== undefined) { newNote.images = images; }
     if (todoItems !== undefined) { newNote.todoItems = todoItems; }
     newNote.updatedAt = Date.now();
 
     // Find the note to be updated and update it
-    let note = await Note.findById(req.params.id);
+    // Only find notes that belong to the authenticated user
+    let note = await Note.findOne({ 
+      _id: req.params.id, 
+      user: req.user.id 
+    });
+    
     if (!note) {
-      return res.status(404).send({
+      return res.status(404).json({
         success: false,
-        error: "Note not found"
-      });
-    }
-
-    // Allow update only if user owns this Note
-    if (note.user.toString() !== req.user.id) {
-      return res.status(401).send({
-        success: false,
-        error: "Not Allowed"
+        error: "Note not found or you don't have permission to update it"
       });
     }
     
@@ -100,10 +102,13 @@ router.put("/updatenote/:id", fetchuser, async (req, res) => {
       { new: true }
     );
     
-    res.json({ note });
+    res.json({ 
+      success: true,
+      note: note 
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Update note error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -114,19 +119,16 @@ router.put("/updatenote/:id", fetchuser, async (req, res) => {
 router.delete("/deletenote/:id", fetchuser, async (req, res) => {
   try {
     // Find the note to be deleted and delete it
-    let note = await Note.findById(req.params.id);
+    //Only find notes that belong to the authenticated user
+    let note = await Note.findOne({ 
+      _id: req.params.id, 
+      user: req.user.id 
+    });
+    
     if (!note) {
-      return res.status(404).send({
+      return res.status(404).json({
         success: false,
-        error: "Note not found"
-      });
-    }
-
-    // Allow deletion only if user owns this Note
-    if (note.user.toString() !== req.user.id) {
-      return res.status(401).send({
-        success: false,
-        error: "Not Allowed"
+        error: "Note not found or you don't have permission to delete it"
       });
     }
 
@@ -138,8 +140,8 @@ router.delete("/deletenote/:id", fetchuser, async (req, res) => {
     });
     
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Delete note error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -150,9 +152,10 @@ router.delete("/deletenote/:id", fetchuser, async (req, res) => {
 router.get("/search", fetchuser, async (req, res) => {
   try {
     const { q, tag, sortBy } = req.query;
+    
+    // Only search within the authenticated user's notes
     let query = { user: req.user.id };
 
-    // Build search query
     if (q) {
       query.$or = [
         { title: { $regex: q, $options: 'i' } },
@@ -165,7 +168,6 @@ router.get("/search", fetchuser, async (req, res) => {
       query.tag = { $regex: tag, $options: 'i' };
     }
 
-    // Build sort options
     let sortOptions = {};
     switch (sortBy) {
       case 'dateModified':
@@ -178,15 +180,18 @@ router.get("/search", fetchuser, async (req, res) => {
         sortOptions = { title: -1 };
         break;
       default:
-        sortOptions = { createdAt: -1 };
+        sortOptions = { date: -1 };
     }
 
     const notes = await Note.find(query).sort(sortOptions);
-    res.json(notes);
+    res.json({
+      success: true,
+      notes: notes
+    });
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Search notes error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -196,6 +201,7 @@ router.get("/search", fetchuser, async (req, res) => {
 // ROUTE 6: Get note statistics: GET "/api/notes/stats". Login required
 router.get("/stats", fetchuser, async (req, res) => {
   try {
+    //Only get stats for the authenticated user's notes
     const notes = await Note.find({ user: req.user.id });
     
     const stats = {
@@ -210,26 +216,23 @@ router.get("/stats", fetchuser, async (req, res) => {
     };
 
     notes.forEach(note => {
-      // Count words and characters
       const text = (note.title + ' ' + note.description).trim();
-      stats.totalWords += text.split(/\s+/).length;
-      stats.totalCharacters += text.length;
+      if (text) {
+        stats.totalWords += text.split(/\s+/).filter(word => word.length > 0).length;
+        stats.totalCharacters += text.length;
+      }
 
-      // Count todos
       if (note.todoItems && note.todoItems.length > 0) {
         stats.totalTodos += note.todoItems.length;
         stats.completedTodos += note.todoItems.filter(todo => todo.completed).length;
       }
 
-      // Count notes with media
       if (note.images && note.images.length > 0) {
         stats.notesWithImages++;
       }
       if (note.attachments && note.attachments.length > 0) {
         stats.notesWithAttachments++;
       }
-
-      // Count tags
       if (note.tag) {
         const tags = note.tag.split(',').map(tag => tag.trim()).filter(tag => tag);
         tags.forEach(tag => {
@@ -238,11 +241,14 @@ router.get("/stats", fetchuser, async (req, res) => {
       }
     });
 
-    res.json(stats);
+    res.json({
+      success: true,
+      stats: stats
+    });
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Get stats error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -252,6 +258,7 @@ router.get("/stats", fetchuser, async (req, res) => {
 // ROUTE 7: Get unique tags: GET "/api/notes/tags". Login required
 router.get("/tags", fetchuser, async (req, res) => {
   try {
+    //Only get tags from the authenticated user's notes
     const notes = await Note.find({ user: req.user.id }).select('tag');
     const tagSet = new Set();
 
@@ -263,11 +270,14 @@ router.get("/tags", fetchuser, async (req, res) => {
     });
 
     const uniqueTags = Array.from(tagSet).sort();
-    res.json(uniqueTags);
+    res.json({
+      success: true,
+      tags: uniqueTags
+    });
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Get tags error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -278,23 +288,19 @@ router.get("/tags", fetchuser, async (req, res) => {
 router.post("/duplicate/:id", fetchuser, async (req, res) => {
   try {
     // Find the note to be duplicated
-    let originalNote = await Note.findById(req.params.id);
+    //Only find notes that belong to the authenticated user
+    let originalNote = await Note.findOne({ 
+      _id: req.params.id, 
+      user: req.user.id 
+    });
+    
     if (!originalNote) {
-      return res.status(404).send({
+      return res.status(404).json({
         success: false,
-        error: "Note not found"
+        error: "Note not found or you don't have permission to duplicate it"
       });
     }
 
-    // Allow duplication only if user owns this Note
-    if (originalNote.user.toString() !== req.user.id) {
-      return res.status(401).send({
-        success: false,
-        error: "Not Allowed"
-      });
-    }
-
-    // Create duplicate note
     const duplicateNote = new Note({
       title: `${originalNote.title} (Copy)`,
       description: originalNote.description,
@@ -302,15 +308,18 @@ router.post("/duplicate/:id", fetchuser, async (req, res) => {
       attachments: originalNote.attachments,
       images: originalNote.images,
       todoItems: originalNote.todoItems,
-      user: req.user.id,
+      user: req.user.id, // Ensure duplicate belongs to the authenticated user
     });
 
     const savedNote = await duplicateNote.save();
-    res.json(savedNote);
+    res.json({
+      success: true,
+      note: savedNote
+    });
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Duplicate note error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -323,26 +332,13 @@ router.delete("/bulk-delete", fetchuser, async (req, res) => {
     const { noteIds } = req.body;
 
     if (!noteIds || !Array.isArray(noteIds) || noteIds.length === 0) {
-      return res.status(400).send({
+      return res.status(400).json({
         success: false,
         error: "Invalid note IDs provided"
       });
     }
 
-    // Verify all notes belong to the user
-    const notes = await Note.find({ 
-      _id: { $in: noteIds }, 
-      user: req.user.id 
-    });
-
-    if (notes.length !== noteIds.length) {
-      return res.status(401).send({
-        success: false,
-        error: "Some notes don't belong to you or don't exist"
-      });
-    }
-
-    // Delete the notes
+    //Only delete notes that belong to the authenticated user
     const result = await Note.deleteMany({ 
       _id: { $in: noteIds }, 
       user: req.user.id 
@@ -355,8 +351,8 @@ router.delete("/bulk-delete", fetchuser, async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Bulk delete error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });
@@ -367,21 +363,22 @@ router.delete("/bulk-delete", fetchuser, async (req, res) => {
 router.get("/export", fetchuser, async (req, res) => {
   try {
     const { format = 'json' } = req.query;
-    const notes = await Note.find({ user: req.user.id }).sort({ createdAt: -1 });
+    
+    //Only export the authenticated user's notes
+    const notes = await Note.find({ user: req.user.id }).sort({ date: -1 });
 
     if (format === 'json') {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', 'attachment; filename="diary-desk-notes.json"');
       res.json(notes);
     } else if (format === 'csv') {
-      // Simple CSV export
       const csvHeader = 'Title,Description,Tag,Created Date,Updated Date\n';
       const csvData = notes.map(note => {
         const title = `"${note.title.replace(/"/g, '""')}"`;
         const description = `"${note.description.replace(/"/g, '""')}"`;
         const tag = `"${note.tag || ''}"`;
-        const createdAt = new Date(note.createdAt).toISOString();
-        const updatedAt = new Date(note.updatedAt).toISOString();
+        const createdAt = new Date(note.date).toISOString();
+        const updatedAt = new Date(note.updatedAt || note.date).toISOString();
         return `${title},${description},${tag},${createdAt},${updatedAt}`;
       }).join('\n');
 
@@ -389,15 +386,15 @@ router.get("/export", fetchuser, async (req, res) => {
       res.setHeader('Content-Disposition', 'attachment; filename="diary-desk-notes.csv"');
       res.send(csvHeader + csvData);
     } else {
-      res.status(400).send({
+      res.status(400).json({
         success: false,
         error: "Invalid format. Supported formats: json, csv"
       });
     }
 
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send({
+    console.error('Export notes error:', error);
+    res.status(500).json({
       success: false,
       error: "Internal Server Error"
     });

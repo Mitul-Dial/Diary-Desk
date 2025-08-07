@@ -5,88 +5,108 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 require('dotenv').config();
 
+
 // Connect to MongoDB
 connectToMongo();
 
 const app = express();
-const port = 5000; // Hard-coded to port 5000 as requested
-
-// Security middleware
+const port = 5000;
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false 
 }));
 
-// Rate limiting - More lenient for development
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Increased limit
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message: {
     error: "Too many requests from this IP, please try again later."
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+  }
 });
 app.use(limiter);
 
-// Auth specific rate limiting - More lenient
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50, // Increased for development
+  max: 100,
   message: {
     error: "Too many authentication attempts, please try again later."
+  },
+  skip: (req) => {
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
   }
 });
 
-// CORS configuration - Allow all origins for development
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow any localhost port for development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return callback(null, true);
-    }
-    
-    // For production, add your specific domains here
-    const allowedOrigins = ['https://your-frontend-domain.com'];
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    
-    return callback(null, true); // Allow all for now
-  },
+  origin: true, 
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'auth-token']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'auth-token', 
+    'x-requested-with',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ]
 };
 app.use(cors(corsOptions));
 
-// Body parsing middleware
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Debug middleware to log requests
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
   if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Request body:', req.body);
   }
   next();
 });
 
+// Add response logging
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  res.send = function(data) {
+    console.log(`Response for ${req.method} ${req.path}:`, {
+      status: res.statusCode,
+      data: typeof data === 'string' ? data.substring(0, 200) + '...' : data
+    });
+    originalSend.call(this, data);
+  };
+  next();
+});
+
+
 // Routes
-app.use("/api/auth", authLimiter, require("./routes/auth"));
-app.use("/api/notes", require("./routes/notes"));
+try {
+  app.use("/api/auth", authLimiter, require("./routes/auth"));
+} catch (error) {
+  console.error(' Error loading auth routes:', error.message);
+}
+
+try {
+  app.use("/api/notes", require("./routes/notes"));
+} catch (error) {
+  console.error(' Error loading notes routes:', error.message);
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  console.log(' Health check requested');
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'Diary Desk API',
-    port: port
+    port: port,
+    mongodb: 'Connected',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -95,11 +115,29 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'Diary Desk API is running!',
     port: port,
+    timestamp: new Date().toISOString(),
     endpoints: {
       auth: '/api/auth',
       notes: '/api/notes',
       health: '/health'
-    }
+    },
+    availableRoutes: [
+      'POST /api/auth/createuser - Create new user',
+      'POST /api/auth/login - User login',
+      'GET /api/auth/getuser - Get user profile',
+      'GET /api/notes/fetchallnotes - Get all user notes',
+      'POST /api/notes/addnote - Create new note'
+    ]
+  });
+});
+
+// Test endpoint for quick debugging
+app.get('/test', (req, res) => {
+  res.json({
+    message: 'Test endpoint working!',
+    timestamp: new Date().toISOString(),
+    server: 'Running',
+    port: port
   });
 });
 
@@ -107,24 +145,57 @@ app.get('/', (req, res) => {
 app.use('*', (req, res) => {
   res.status(404).json({ 
     success: false,
-    error: 'Route not found' 
+    error: 'Route not found',
+    requestedUrl: req.originalUrl,
+    availableEndpoints: [
+      '/',
+      '/health',
+      '/test',
+      '/api/auth/createuser',
+      '/api/auth/login',
+      '/api/notes/fetchallnotes'
+    ]
   });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err.stack);
   res.status(500).json({ 
     success: false,
     error: process.env.NODE_ENV === 'production' 
       ? 'Something went wrong!' 
-      : err.message 
+      : err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
-app.listen(port, () => {
-  console.log(`Diary Desk API server running on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
+// Start server with better error handling
+const server = app.listen(port, (err) => {
+  if (err) {
+    process.exit(1);
+  }
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    process.exit(1);
+  } else {
+    process.exit(1);
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 module.exports = app;

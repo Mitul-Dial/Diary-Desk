@@ -8,7 +8,6 @@ const About = () => {
       padding: 'var(--spacing-xl) 0'
     }}>
       <div className="container">
-        {/* Hero Section */}
         <div style={{
           textAlign: 'center',
           marginBottom: 'var(--spacing-2xl)',
@@ -20,7 +19,6 @@ const About = () => {
             marginBottom: 'var(--spacing-lg)',
             opacity: 0.9
           }}>
-            <i className="fas fa-sticky-note"></i>
           </div>
           <h1 style={{
             fontSize: 'var(--text-4xl)',
@@ -43,7 +41,6 @@ const About = () => {
           </p>
         </div>
 
-        {/* Main Content Card */}
         <div className="card" style={{
           maxWidth: '1000px',
           margin: '0 auto',
@@ -53,7 +50,6 @@ const About = () => {
           overflow: 'hidden',
           animation: 'scaleIn 0.6s ease-out'
         }}>
-          {/* Features Section */}
           <div className="card-body" style={{ padding: 'var(--spacing-2xl)' }}>
             <div style={{
               textAlign: 'center',
@@ -77,7 +73,6 @@ const About = () => {
               </p>
             </div>
 
-            {/* Features Grid */}
             <div className="row" style={{ marginBottom: 'var(--spacing-2xl)' }}>
               {[
                 {
@@ -172,7 +167,6 @@ const About = () => {
               ))}
             </div>
 
-            {/* Technology Stack */}
             <div style={{
               textAlign: 'center',
               marginBottom: 'var(--spacing-2xl)',
@@ -258,7 +252,6 @@ const About = () => {
               </div>
             </div>
 
-            {/* Security Section */}
             <div style={{
               background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
               color: 'var(--color-white)',
@@ -325,7 +318,6 @@ const About = () => {
               </div>
             </div>
 
-            {/* Tips Section */}
             <div style={{
               backgroundColor: 'var(--color-background)',
               padding: 'var(--spacing-xl)',
@@ -386,7 +378,6 @@ const About = () => {
               </div>
             </div>
 
-            {/* Call to Action */}
             <div style={{
               textAlign: 'center',
               background: 'linear-gradient(135deg, var(--color-success) 0%, var(--color-accent) 100%)',
@@ -453,7 +444,6 @@ const About = () => {
           </div>
         </div>
 
-        {/* Version Info */}
         <div style={{
           textAlign: 'center',
           marginTop: 'var(--spacing-2xl)',
@@ -461,7 +451,7 @@ const About = () => {
           fontSize: 'var(--text-sm)'
         }}>
           <p style={{ margin: 0 }}>
-            Diary Desk v1.0 - Built with ❤️ for better note-taking
+            Diary Desk v1.0 - Made by <strong>MITUL DIAL</strong>
           </p>
         </div>
       </div>

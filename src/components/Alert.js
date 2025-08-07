@@ -62,7 +62,6 @@ function Alert(props) {
             <strong>{capitalize(props.alert.type)}</strong>: {props.alert.msg}
           </div>
 
-          {/* Animated progress bar */}
           <div style={{
             position: 'absolute',
             bottom: 0,

@@ -1,59 +1,116 @@
 import NoteContext from "./noteContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NoteState = (props) => {
   const host = "http://localhost:5000";
   const notesInitial = [];
   const [notes, setNotes] = useState(notesInitial);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Get all Notes
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  const isAuthenticated = () => {
+    const token = getAuthToken();
+    return !!token;
+  };
+
   const getNotes = async () => {
+    if (!isAuthenticated()) {
+      setNotes([]);
+      return;
+    }
+
+    setIsLoading(true);
     try {
+      const token = getAuthToken();
+      
       const response = await fetch(`${host}/api/notes/fetchallnotes`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          "auth-token": localStorage.getItem('token')
+          "auth-token": token
         }
       });
 
+
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setNotes([]);
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const json = await response.json();
-      console.log("Fetched notes:", json);
-      setNotes(json);
+      
+      if (Array.isArray(json)) {
+        setNotes(json);
+      } else if (json && json.notes && Array.isArray(json.notes)) {
+        setNotes(json.notes);
+      } else {
+        setNotes([]);
+      }
     } catch (error) {
       console.error("Error fetching notes:", error);
       setNotes([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (props.isAuthenticated) {
+      getNotes();
+    } else {
+      setNotes([]);
+    }
+  }, [props.isAuthenticated]);
+
   // Add a Note
   const addNote = async (title, description, tag) => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     try {
+      const token = getAuthToken();
       const response = await fetch(`${host}/api/notes/addnote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          "auth-token": localStorage.getItem('token')
+          "auth-token": token
         },
         body: JSON.stringify({ title, description, tag })
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          return false;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const note = await response.json();
-      console.log("Adding note:", note);
+      const result = await response.json();
       
-      if (note && note._id) {
-        setNotes(notes.concat(note));
+      if (result.success && result.note && result.note._id) {
+        setNotes(prevNotes => {
+          const currentNotes = Array.isArray(prevNotes) ? prevNotes : [];
+          return [result.note, ...currentNotes];
+        });
         return true;
-      } else {
-        console.error("Invalid note response:", note);
+      } 
+      else if (result._id) {
+        setNotes(prevNotes => {
+          const currentNotes = Array.isArray(prevNotes) ? prevNotes : [];
+          return [result, ...currentNotes];
+        });
+        return true;
+      } 
+      else {
         return false;
       }
     } catch (error) {
@@ -64,22 +121,32 @@ const NoteState = (props) => {
 
   // Delete a Note
   const deleteNote = async (id) => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     try {
+      const token = getAuthToken();
       const response = await fetch(`${host}/api/notes/deletenote/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          "auth-token": localStorage.getItem('token')
+          "auth-token": token
         }
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          return false;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log("Deleting note with id:", id);
-      const newNotes = notes.filter((note) => { return note._id !== id });
-      setNotes(newNotes);
+      setNotes(prevNotes => {
+        const currentNotes = Array.isArray(prevNotes) ? prevNotes : [];
+        return currentNotes.filter((note) => note._id !== id);
+      });
       return true;
     } catch (error) {
       console.error("Error deleting note:", error);
@@ -87,37 +154,46 @@ const NoteState = (props) => {
     }
   };
 
-  // Edit a Note
   const editNote = async (id, title, description, tag) => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     try {
+      const token = getAuthToken();
       const response = await fetch(`${host}/api/notes/updatenote/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          "auth-token": localStorage.getItem('token')
+          "auth-token": token
         },
         body: JSON.stringify({ title, description, tag })
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          return false;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const json = await response.json();
-      console.log("Editing note:", json);
 
-      let newNotes = JSON.parse(JSON.stringify(notes));
-      // Logic to edit in client
-      for (let index = 0; index < newNotes.length; index++) {
-        const element = newNotes[index];
-        if (element._id === id) {
-          newNotes[index].title = title;
-          newNotes[index].description = description;
-          newNotes[index].tag = tag;
-          break;
-        }
-      }
-      setNotes(newNotes);
+      setNotes(prevNotes => {
+        const currentNotes = Array.isArray(prevNotes) ? prevNotes : [];
+        return currentNotes.map(note => {
+          if (note._id === id) {
+            return {
+              ...note,
+              title: title,
+              description: description,
+              tag: tag
+            };
+          }
+          return note;
+        });
+      });
       return true;
     } catch (error) {
       console.error("Error editing note:", error);
@@ -131,7 +207,9 @@ const NoteState = (props) => {
       addNote, 
       deleteNote, 
       editNote, 
-      getNotes 
+      getNotes,
+      isLoading,
+      isAuthenticated: props.isAuthenticated
     }}>
       {props.children}
     </NoteContext.Provider>

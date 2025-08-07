@@ -47,7 +47,6 @@ const Navbar = ({ refreshAuthState }) => {
         justifyContent: 'space-between',
         height: '64px'
       }}>
-        {/* Brand */}
         <Link 
           to="/" 
           style={{
@@ -63,11 +62,10 @@ const Navbar = ({ refreshAuthState }) => {
           onMouseOver={(e) => e.target.style.color = 'var(--color-primary-dark)'}
           onMouseOut={(e) => e.target.style.color = 'var(--color-primary)'}
         >
-          <i className="fas fa-sticky-note"></i>
+          <img src="favicon-32x32.png" alt="Logo" />
           Diary Desk
         </Link>
 
-        {/* Desktop Navigation */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -167,13 +165,7 @@ const Navbar = ({ refreshAuthState }) => {
                 </button>
                 {dropdownOpen && (
                   <div className="dropdown-menu" style={{display: 'block'}}>
-                    <Link className="dropdown-item" to="/profile" onClick={() => setDropdownOpen(false)}>
-                      <i className="fas fa-user-cog"></i>Profile
-                    </Link>
-                    <Link className="dropdown-item" to="/" onClick={() => setDropdownOpen(false)}>
-                      <i className="fas fa-sticky-note"></i>My Notes
-                    </Link>
-                    <div className="dropdown-divider"></div>
+                    
                     <button className="dropdown-item" onClick={handleLogout} style={{color: 'var(--color-error)'}}>
                       <i className="fas fa-sign-out-alt"></i>Logout
                     </button>
@@ -184,7 +176,6 @@ const Navbar = ({ refreshAuthState }) => {
           </div>
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           onClick={toggleMobileMenu}
           style={{
@@ -211,7 +202,6 @@ const Navbar = ({ refreshAuthState }) => {
         </button>
       </div>
 
-      {/* Mobile Navigation */}
       {isOpen && (
         <div style={{
           display: 'none',

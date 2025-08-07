@@ -15,15 +15,12 @@ const Noteitem = (props) => {
     }
     setDropdownOpen(false);
   };
-
-  // Truncate content for preview
   const truncateText = (text, limit = 150) => {
     if (!text) return '';
     if (text.length <= limit) return text;
     return showFullContent ? text : text.substring(0, limit) + '...';
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -68,7 +65,6 @@ const Noteitem = (props) => {
           e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
         }}
       >
-        {/* Card Header */}
         <div className="card-header" style={{
           padding: 'var(--spacing-md)',
           borderBottom: '1px solid var(--color-border)',
@@ -90,7 +86,6 @@ const Noteitem = (props) => {
             {note.title.length > 50 ? note.title.substring(0, 50) + '...' : note.title}
           </h5>
           
-          {/* Action Dropdown */}
           <div className="dropdown" style={{ position: 'relative' }}>
             <button
               onClick={toggleDropdown}
@@ -143,14 +138,12 @@ const Noteitem = (props) => {
           </div>
         </div>
 
-        {/* Card Body */}
         <div className="card-body" style={{
           padding: 'var(--spacing-md)',
           flex: 1,
           display: 'flex',
           flexDirection: 'column'
         }}>
-          {/* Note Content */}
           <div style={{ flex: 1, marginBottom: 'var(--spacing-md)' }}>
             <p style={{
               margin: 0,
@@ -184,12 +177,11 @@ const Noteitem = (props) => {
             )}
           </div>
 
-          {/* Tag */}
           {note.tag && (
             <div style={{ marginBottom: 'var(--spacing-md)' }}>
               <span className="badge" style={{
                 backgroundColor: 'var(--color-primary-light)',
-                color: 'var(--color-primary-dark)',
+                color: 'var(--color-text)',
                 fontSize: 'var(--text-xs)',
                 padding: 'var(--spacing-xs) var(--spacing-sm)',
                 borderRadius: 'var(--radius-sm)',
@@ -202,7 +194,6 @@ const Noteitem = (props) => {
           )}
         </div>
 
-        {/* Card Footer */}
         <div className="card-footer" style={{
           padding: 'var(--spacing-md)',
           borderTop: '1px solid var(--color-border)',
@@ -222,7 +213,6 @@ const Noteitem = (props) => {
             {formatDate(note.date)}
           </div>
           
-          {/* Quick Actions */}
           <div style={{
             display: 'flex',
             gap: 'var(--spacing-xs)'

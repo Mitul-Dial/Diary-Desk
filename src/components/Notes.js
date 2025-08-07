@@ -7,17 +7,25 @@ import AddNote from "./AddNote";
 const Notes = (props) => {
   const context = useContext(noteContext);
   let navigate = useNavigate();
-  const { notes, getNotes, editNote } = context;
+  const { notes, getNotes, editNote, isLoading, isAuthenticated } = context;
   
   useEffect(() => {
-    if(localStorage.getItem('token')){
+    console.log("Token in localStorage:", localStorage.getItem('token') ? "present" : "missing");
+    
+    if(localStorage.getItem('token') && isAuthenticated){
       getNotes();
     }
-    else{
+    else if (!localStorage.getItem('token')) {
       navigate("/login")
     }
     // eslint-disable-next-line
-  }, []);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    console.log("Is notes an array?", Array.isArray(notes));
+    if (Array.isArray(notes)) {
+    }
+  }, [notes]);
   
   const ref = useRef(null);
   const refClose = useRef(null);
@@ -55,11 +63,11 @@ const Notes = (props) => {
   const closeModal = () => {
     setModalOpen(false);
   };
-
-  // Get unique tags from notes
+  
   const getAllTags = () => {
     const tags = new Set();
-    notes.forEach(note => {
+    const notesArray = Array.isArray(notes) ? notes : [];
+    notesArray.forEach(note => {
       if (note.tag && note.tag.trim()) {
         tags.add(note.tag.trim());
       }
@@ -67,9 +75,9 @@ const Notes = (props) => {
     return Array.from(tags).sort();
   };
 
-  // Filter notes based on search and tag
   const getFilteredNotes = () => {
-    return notes.filter(note => {
+    const notesArray = Array.isArray(notes) ? notes : [];
+    const filtered = notesArray.filter(note => {
       const matchesSearch = !searchTerm || 
         note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,16 +87,32 @@ const Notes = (props) => {
       
       return matchesSearch && matchesTag;
     });
+    return filtered;
   };
 
   const filteredNotes = getFilteredNotes();
   const availableTags = getAllTags();
 
+  if (isLoading) {
+    return (
+      <div className="container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '50vh',
+        fontSize: '1.2rem'
+      }}>
+        <div>
+          <i className="fas fa-spinner fa-spin me-2"></i>
+          Loading your notes...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <AddNote showAlert={props.showAlert} />
-      
-      {/* Search and Filter Section */}
       <div className="container" style={{ marginBottom: 'var(--spacing-xl)' }}>
         <div className="card" style={{
           border: 'none',
@@ -114,7 +138,6 @@ const Notes = (props) => {
           
           <div className="card-body" style={{ padding: 'var(--spacing-lg)' }}>
             <div className="row" style={{ gap: 'var(--spacing-md)' }}>
-              {/* Search Input */}
               <div className="col-12 col-md-8" style={{ marginBottom: 'var(--spacing-md)' }}>
                 <label style={{
                   display: 'block',
@@ -167,7 +190,6 @@ const Notes = (props) => {
                 </div>
               </div>
 
-              {/* Tag Filter */}
               <div className="col-12 col-md-4" style={{ marginBottom: 'var(--spacing-md)' }}>
                 <label style={{
                   display: 'block',
@@ -198,7 +220,6 @@ const Notes = (props) => {
               </div>
             </div>
 
-            {/* Active Filters Display */}
             {(searchTerm || selectedTag) && (
               <div style={{
                 marginTop: 'var(--spacing-md)',
@@ -247,7 +268,6 @@ const Notes = (props) => {
         </div>
       </div>
 
-      {/* Notes Statistics */}
       <div className="container" style={{ marginBottom: 'var(--spacing-xl)' }}>
         <div className="card" style={{
           border: 'none',
@@ -282,7 +302,7 @@ const Notes = (props) => {
                     color: 'var(--color-text)',
                     marginBottom: 'var(--spacing-xs)'
                   }}>
-                    {notes.length}
+                    {Array.isArray(notes) ? notes.length : 0}
                   </div>
                   <div style={{
                     fontSize: 'var(--text-sm)',
@@ -393,7 +413,7 @@ const Notes = (props) => {
                     color: 'var(--color-text)',
                     marginBottom: 'var(--spacing-xs)'
                   }}>
-                    {notes.reduce((total, note) => total + (note.description?.length || 0), 0).toLocaleString()}
+                    {Array.isArray(notes) ? notes.reduce((total, note) => total + (note.description?.length || 0), 0).toLocaleString() : 0}
                   </div>
                   <div style={{
                     fontSize: 'var(--text-sm)',
@@ -408,7 +428,6 @@ const Notes = (props) => {
         </div>
       </div>
 
-      {/* Edit Note Modal */}
       {modalOpen && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -468,7 +487,7 @@ const Notes = (props) => {
                   
                   <div className="form-group">
                     <label htmlFor="etag" className="form-label">
-                      <i className="fas fa-tag me-2" style={{color: 'var(--color-primary)'}}></i>
+                      <i className="fas fa-tag me-2" style={{color: 'var(--color-text)'}}></i>
                       Category Tag
                     </label>
                     <input
@@ -505,7 +524,6 @@ const Notes = (props) => {
         </div>
       )}
 
-      {/* Notes Display */}
       <div className="container">
         <div style={{
           display: 'flex',
@@ -530,12 +548,11 @@ const Notes = (props) => {
             color: 'var(--color-text-muted)',
             textAlign: 'right'
           }}>
-            Showing {filteredNotes.length} of {notes.length} notes
+            Showing {filteredNotes.length} of {Array.isArray(notes) ? notes.length : 0} notes
           </div>
         </div>
         
-        {/* Empty States */}
-        {filteredNotes.length === 0 && notes.length === 0 && (
+        {filteredNotes.length === 0 && (!Array.isArray(notes) || notes.length === 0) && (
           <div style={{
             textAlign: 'center',
             padding: 'var(--spacing-2xl)',
@@ -567,7 +584,7 @@ const Notes = (props) => {
           </div>
         )}
         
-        {filteredNotes.length === 0 && notes.length > 0 && (
+        {filteredNotes.length === 0 && Array.isArray(notes) && notes.length > 0 && (
           <div style={{
             textAlign: 'center',
             padding: 'var(--spacing-2xl)',
@@ -599,7 +616,6 @@ const Notes = (props) => {
           </div>
         )}
         
-        {/* Notes Grid */}
         {filteredNotes.length > 0 && (
           <div className="row" style={{ margin: '0 calc(-1 * var(--spacing-sm))' }}>
             {filteredNotes.map((note) => {

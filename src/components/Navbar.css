@@ -1,4 +1,4 @@
-/* Navbar Styles */
+
 .navbar {
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -18,8 +18,6 @@
   margin: 0 auto;
   padding: 0 1rem;
 }
-
-/* Brand */
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -39,7 +37,6 @@
   margin-right: var(--spacing-xs);
 }
 
-/* Desktop Navigation */
 .desktop-nav {
   display: flex;
   align-items: center;
@@ -82,7 +79,6 @@
   margin-right: var(--spacing-xs);
 }
 
-/* Auth Buttons */
 .auth-buttons {
   display: flex;
   align-items: center;
@@ -94,7 +90,6 @@
   gap: var(--spacing-sm);
 }
 
-/* Button Styles */
 .btn {
   display: flex;
   align-items: center;
@@ -134,7 +129,6 @@
   color: white;
 }
 
-/* Dropdown */
 .dropdown {
   position: relative;
 }
@@ -221,7 +215,6 @@
   margin: var(--spacing-xs) 0;
 }
 
-/* Mobile Menu Button */
 .mobile-menu-btn {
   display: none;
   align-items: center;
@@ -241,7 +234,6 @@
   background-color: var(--color-background);
 }
 
-/* Mobile Navigation */
 .mobile-nav {
   display: none;
   border-top: 1px solid var(--color-border);
@@ -317,8 +309,6 @@
 .mobile-btn {
   justify-content: center;
 }
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .desktop-nav {
     display: none !important;
@@ -333,7 +323,6 @@
   }
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -356,7 +345,6 @@
   }
 }
 
-/* Focus states for accessibility */
 .nav-link:focus,
 .btn:focus,
 .dropdown-toggle:focus,
@@ -367,7 +355,6 @@
   outline-offset: 2px;
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   .navbar {
     border-bottom-width: 2px;

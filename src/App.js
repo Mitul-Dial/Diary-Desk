@@ -11,7 +11,9 @@ import { useState, useEffect } from "react";
 
 function App() {
   const [alert, setAlert] = useState(null);
-  const [authKey, setAuthKey] = useState(0); // Key to force remounting
+  const [authKey, setAuthKey] = useState(0); 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const showAlert = (message, type) => {
     setAlert({
@@ -23,22 +25,46 @@ function App() {
     }, 3000);
   };
 
-  // Function to refresh the app state after auth changes
-  const refreshAuthState = () => {
-    setAuthKey(prev => prev + 1);
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+    setIsLoading(false);
+    return !!token;
   };
 
-  // Listen for storage changes (when token is set/removed)
+  const refreshAuthState = () => {
+    setAuthKey(prev => prev + 1);
+    setTimeout(() => {
+      checkAuthStatus();
+    }, 100); 
+  };
+
   useEffect(() => {
-    const handleStorageChange = () => {
+    checkAuthStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'token') {
+        checkAuthStatus();
+        refreshAuthState();
+      }
+    };
+
+    const handleAuthChange = () => {
+      checkAuthStatus();
       refreshAuthState();
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('authChanged', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authChanged', handleAuthChange);
+    };
   }, []);
 
-  // Apply theme on app load
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -49,9 +75,26 @@ function App() {
     }
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="App" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        fontSize: '1.2rem'
+      }}>
+        <div>
+          <i className="fas fa-spinner fa-spin me-2"></i>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
-      <NoteState key={authKey}>
+      <NoteState key={authKey} isAuthenticated={isAuthenticated}>
         <Router>
           <Navbar refreshAuthState={refreshAuthState} />
           <Alert alert={alert}/>
@@ -83,11 +126,10 @@ function App() {
                   />
                 } 
               />
-              {/* Catch all route - redirect to home or login */}
               <Route 
                 path="*" 
                 element={
-                  localStorage.getItem('token') ? 
+                  isAuthenticated ? 
                     <Home showAlert={showAlert} key={authKey} /> : 
                     <Login showAlert={showAlert} refreshAuthState={refreshAuthState} />
                 } 

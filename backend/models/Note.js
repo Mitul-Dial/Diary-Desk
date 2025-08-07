@@ -23,14 +23,55 @@ const NotesSchema = new Schema({
     default: "General",
     trim: true
   },
+  attachments: [{
+    filename: String,
+    url: String,
+    size: Number,
+    uploadDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  images: [{
+    filename: String,
+    url: String,
+    caption: String,
+    uploadDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  todoItems: [{
+    text: {
+      type: String,
+      required: true
+    },
+    completed: {
+      type: Boolean,
+      default: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   date: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Create indexes for better performance
 NotesSchema.index({ user: 1, date: -1 });
 NotesSchema.index({ user: 1, title: 'text', description: 'text' });
+NotesSchema.index({ user: 1, tag: 1 });
+
+NotesSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 module.exports = mongoose.model("notes", NotesSchema);
