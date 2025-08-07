@@ -1,70 +1,83 @@
-# Getting Started with Create React App
+# Diary Desk – Your Secure & Minimalist Digital Journal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Diary Desk** is a beautifully designed, responsive, and secure web app built for personal note-taking and journaling. Whether you're jotting down daily thoughts, organizing project ideas, or storing memories, Diary Desk provides a focused and private space to capture what matters most.
 
-## Available Scripts
+The app is designed with a calming UI, intuitive controls, and robust backend security — making it perfect for writers, students, professionals, and anyone who loves keeping their notes organized and accessible.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Key Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Note Management
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+* Create & Edit Notes: Add, update, and delete notes with ease.
+* Smart Search: Instantly locate notes with powerful search.
+* Tag System: Categorize your notes with custom tags.
 
-### `npm test`
+### Theming & UI
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* Dark Mode: Seamlessly toggle between light and dark themes.
+* Responsive Design: Works perfectly across desktops, tablets, and mobile devices.
+* Minimalist Aesthetic: Gentle color palette (beige, lavender, sage green) for a focused writing environment.
 
-### `npm run build`
+### Security & Privacy
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* JWT Authentication: Secure token-based login system.
+* Bcrypt Password Protection: Passwords are hashed using industry-standard encryption.
+* Input Validation: All user inputs are sanitized and validated.
+* Private by Default: Your notes are stored securely and never shared.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Tech Stack
 
-### `npm run eject`
+### Frontend
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+* React.js 18 – Component-based UI framework
+* Custom CSS – No frameworks like Bootstrap or Tailwind used
+* Font Awesome – Clean, modern icons
+* React Router – For seamless navigation
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Backend
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+* Node.js – JavaScript runtime
+* Express.js – Web server framework
+* MongoDB – NoSQL document database
+* JWT – JSON Web Tokens for authentication
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## Tips for Better Note-Taking
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+* Use descriptive titles to easily identify your notes.
+* Add tags to group notes by topic or project.
+* Use the search bar to find specific content instantly.
+* Keep notes concise but detailed enough for future use.
+* Review and update notes regularly to stay organized.
+* Use dark mode for night journaling or reduced eye strain.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## How to Use Diary Desk
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Register or log in to your secure Diary Desk account.
+2. Create your first note with a title, content, and tags.
+3. Use the search bar to find notes instantly.
+4. Edit or delete notes as needed.
+5. Toggle dark/light mode based on your preference.
+6. Enjoy journaling in a calming, distraction-free environment.
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Programming Languages Used
 
-### Making a Progressive Web App
+* JavaScript (React.js, Node.js)
+* HTML
+* CSS
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## Author
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Developed by Mitul Dial**  
+GitHub: [https://github.com/Mitul-Dial](https://github.com/Mitul-Dial)
