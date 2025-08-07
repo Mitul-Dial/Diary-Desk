@@ -77,12 +77,6 @@ The app is designed with a calming UI, intuitive controls, and robust backend se
 
 ---
 
-## License
-
-This project is open-source and free for personal, educational, and non-commercial use.
-
----
-
 ## Author
 
 **Developed by Mitul Dial**  
